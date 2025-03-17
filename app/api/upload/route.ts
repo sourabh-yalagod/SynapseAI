@@ -3,6 +3,7 @@ import { uploadOnCloudinary } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
 import { Document } from "@/models/model";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { generateEmbedding } from "@/actions/generateEmbedding";
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     const file = formData.get("file") as File | null;
+    console.log(file);
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
     }
     await connectDB();
     const newDocument = await Document.create({
+      name: file?.name || "unnamed",
       clerkId: userId,
       username,
       url: response?.secure_url || response?.url,
@@ -59,6 +62,10 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+    const isGenerated = await generateEmbedding(
+      newDocument._id || newDocument.id
+    );
+    console.log("🚀 ~ POST ~ isGenerated:", isGenerated);
     return NextResponse.json({
       message: "File uploaded",
       url: response?.secure_url || response?.url,

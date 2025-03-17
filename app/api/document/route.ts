@@ -10,15 +10,19 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
-  const documents = await Document.find({ clerkId: userId });
-  if (!documents) {
+  console.log(userId);
+
+  try {
+    const documents = await Document.find({ clerkId: userId });
+
     return NextResponse.json(
-      { error: "you have NO documets" },
+      { message: "Document are fetched successfully", data: documents },
+      { status: 201 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: "you have No documets" },
       { status: 400 }
     );
   }
-  return NextResponse.json(
-    { message: "Document are fetched successfully", data: documents },
-    { status: 201 }
-  );
 }

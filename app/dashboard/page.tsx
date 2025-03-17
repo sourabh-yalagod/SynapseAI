@@ -30,7 +30,7 @@ const Dashboard = () => {
     <div className="mx-auto mt-10 px-3 sm:px-10">
       <h1 className="text-2xl font-semibold mb-4 text-center">My Documents</h1>
       <div className="space-y-4 grid grid-cols-1 sm:grid-cols-2 gap-3 xl:grid-cols-3 justify-around w-full">
-        {documents.map((doc) => (
+        {documents?.map((doc) => (
           <DocumentCard key={Math.random()} document={doc} />
         ))}
       </div>

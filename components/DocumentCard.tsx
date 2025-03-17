@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { Delete, Trash } from "lucide-react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 interface DocumentProps {
   _id: string;
@@ -11,13 +14,24 @@ interface DocumentProps {
   subscription: string;
   updatedAt: string;
   url: string;
+  name: string;
   username: string;
   coverImage?: string; // New cover image property (optional)
 }
-
+const handleDelete = async (documentId: string) => {
+  console.log("documentId : ", documentId);
+  if (!documentId) return;
+  try {
+    const { data } = await axios.delete(`/api/delete-document/${documentId}`);
+    console.log(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
 const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
   const defaultCover =
     "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"; // Default icon
+  const router = useRouter();
 
   return (
     <motion.div
@@ -27,7 +41,14 @@ const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
       className="p-4 shadow-md rounded-lg border border-gray-200 dark:border-gray-700"
     >
       {/* Cover Image */}
-      <div className="relative w-full h-48 rounded-md overflow-hidden mb-4">
+      <div
+        onClick={() => router.push(`/dashboard/file/${document?._id}`)}
+        className="relative w-full h-48 rounded-md overflow-hidden mb-4"
+      >
+        <Trash
+          onClick={() => handleDelete(document._id)}
+          className="absolute z-10 cursor-pointer bg-red-600 size-6 p-[2px] hover:scale-105 transition-all rounded-[2px] top-1 right-2"
+        />
         <Image
           src={document.coverImage || defaultCover}
           alt="Document Cover"
@@ -38,9 +59,12 @@ const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
 
       {/* Document Details */}
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {document.username || "Unknown User"}
-        </h2>
+        <div className="grid items-center space-y-2 font-semibold justify-between px-1 text-xs">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {document?.name.split(".")[0] || "Unknown File"}
+          </h2>
+          <h2 className="">{document?.username || "Unknown User"}</h2>
+        </div>
         <span
           className={`px-3 py-1 text-sm rounded-full ${
             document.subscription === "premium"

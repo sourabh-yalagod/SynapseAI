@@ -26,7 +26,7 @@ const Upload = () => {
         },
       });
       console.log("Upload response:", data);
-      router.push("/dashboard");
+      router.push(`/dashboard/file/${data?.document?._id}`);
     } catch (error) {
       console.error("Upload error:", error);
     } finally {

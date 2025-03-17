@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const DocumentSchema = new mongoose.Schema(
   {
     clerkId: { type: String, required: true },
+    name: { type: String, required: true, default: "Unnamed" },
     username: { type: String, required: true },
     url: { type: String, required: true },
     subscription: {
