@@ -6,8 +6,6 @@ export const generateEmbedding = async (docId: string) => {
   await auth.protect();
   const vectoreStore = await generateEmbeddingInVectorStore(docId);
   if (!vectoreStore) return false;
-  console.log(vectoreStore);
-
   revalidatePath("/dashboard");
 
   return true;

@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
       username,
       url: response?.secure_url || response?.url,
     });
-    console.log("🚀 ~ POST ~ newDocument:", newDocument);
     if (!newDocument) {
       return NextResponse.json(
         {

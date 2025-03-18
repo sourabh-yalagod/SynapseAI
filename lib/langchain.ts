@@ -6,35 +6,55 @@ import { PineconeStore } from "@langchain/pinecone";
 import { Document } from "@/models/model";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-
-// initialize model
+import { config } from "dotenv";
+import { openAIKey } from "@/key";
+config();
+// Debugging: Check if the API key is loaded
 console.log(
-  process.env.OPENAI_API_KEY ? "OPEN_API_KEY Loaded" : "OPEN_API_KEY Unloaded"
+  "OPENAI_API_KEY:",
+  process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY : "Not Loaded"
 );
 
+// Initialize model
+
 const model = new ChatOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  modelName: "gpt-4o",
+  apiKey: openAIKey,
+  model: "gpt-4o",
 });
+
+async function validateApiKey() {
+  try {
+    console.log("Validating OpenAI API key...");
+    const response = await model.invoke("Hello, world!"); // Simple test call
+    console.log("API key is valid. Response:", response.content);
+  } catch (error) {
+    console.error("API key validation failed:", error);
+    throw new Error(
+      "Invalid OpenAI API key. Please check your environment variables."
+    );
+  }
+}
+
+// Call the validation function
+validateApiKey();
+
 // indexName from PineCone
 export const indexName = "interact-with-ai-index";
 
-// check name space status
-
+// Check namespace status
 async function checkSpaceExist(
   index: Index<RecordMetadata>,
   namespace: string
 ) {
   if (namespace === null || namespace == "") {
-    throw new Error("Name space reuqired....! [isNameSpaceExist]");
+    throw new Error("Name space required....! [isNameSpaceExist]");
   }
   const { namespaces } = await index.describeIndexStats();
   if (namespaces === undefined) return false;
   return namespaces[namespace] !== undefined || "";
 }
 
-// fetch the doc and generate embeddings
-
+// Fetch the doc and generate embeddings
 async function generateDocs(docId: string) {
   const { userId } = await auth();
   if (!docId) return;
@@ -47,20 +67,20 @@ async function generateDocs(docId: string) {
   }
   console.log(`Download URL : ${docFile.url}`);
 
-  // fetch the PDF and turn to blob
+  // Fetch the PDF and turn to blob
   const response = await fetch(docFile.url);
   const data = await response.blob();
 
-  // load the PDF File
+  // Load the PDF File
   console.log(`-------- Loading the PDF DOC --------`);
 
   const loader = new PDFLoader(data);
   const docs = await loader.load();
-  //   split the Document
+  // Split the Document
 
   const splitter = new RecursiveCharacterTextSplitter();
   const splitDocs = await splitter.splitDocuments(docs);
-  console.log(`Doc Splitted into ${splitDocs.length} parts`);
+  console.log(`Doc Split into ${splitDocs.length} parts`);
 
   return splitDocs || [];
 }
@@ -73,10 +93,12 @@ export async function generateEmbeddingInVectorStore(docId: string) {
       "User not Authenticated [generateEmbeddingInPineconeVectorStore]"
     );
   }
-  console.log(`Generating Embadding from DOC : ${docId}`);
+  console.log(`Generating Embedding from DOC : ${docId}`);
 
-  const embeddings = new OpenAIEmbeddings();
-  // connenct to pinecone with indexName
+  const embeddings = new OpenAIEmbeddings({
+    apiKey: openAIKey,
+  });
+  // Connect to Pinecone with indexName
   const index = await pineconeClient.index(indexName);
 
   const isNameSpaceExist = await checkSpaceExist(index, docId);
@@ -84,9 +106,9 @@ export async function generateEmbeddingInVectorStore(docId: string) {
     "🚀 ~ generateEmbeddingInPineconeVectorStore ~ isNameSpaceExist:",
     isNameSpaceExist
   );
-  let pineconeVectoreStore;
+  let pineconeVectorStore;
   if (isNameSpaceExist) {
-    pineconeVectoreStore = await PineconeStore.fromExistingIndex(embeddings, {
+    pineconeVectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       namespace: docId,
       pineconeIndex: index,
     });
@@ -97,7 +119,7 @@ export async function generateEmbeddingInVectorStore(docId: string) {
     if (splitDocs?.length === 0 || splitDocs === null) {
       throw new Error("Split Docs are invalid");
     }
-    pineconeVectoreStore = await PineconeStore.fromDocuments(
+    pineconeVectorStore = await PineconeStore.fromDocuments(
       splitDocs!,
       embeddings,
       {
@@ -105,6 +127,6 @@ export async function generateEmbeddingInVectorStore(docId: string) {
         pineconeIndex: index,
       }
     );
-    return pineconeVectoreStore;
+    return pineconeVectorStore;
   }
 }
