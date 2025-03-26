@@ -16,7 +16,9 @@ const DocumentSchema = new mongoose.Schema(
 );
 
 const Document =
-  mongoose?.models?.Document || mongoose.model("Document", DocumentSchema);
+  mongoose?.models?.documents ||
+  mongoose?.models?.Document ||
+  mongoose.model("Document", DocumentSchema);
 
 const TransactionSchema = new mongoose.Schema(
   {
@@ -38,6 +40,6 @@ const TransactionSchema = new mongoose.Schema(
 
 const Transaction =
   mongoose.models.Transaction ||
-  mongoose.model("Transaction", TransactionSchema); // ✅ Use Singular Name
+  mongoose.model("Transaction", TransactionSchema);
 
 export { Document, Transaction };

@@ -1,9 +1,11 @@
+import { connectDB } from "@/lib/db";
 import { Document } from "@/models/model";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
+  connectDB();
   if (!userId) {
     return NextResponse.json(
       { error: "Please authenticate....!" },

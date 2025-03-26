@@ -8,11 +8,16 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { config } from "dotenv";
 import { openAIKey } from "@/key";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
+import { createRetrievalChain } from "langchain/chains/retrieval";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+
 config();
 // Debugging: Check if the API key is loaded
 console.log(
   "OPENAI_API_KEY:",
-  process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY : "Not Loaded"
+  process.env.OPENAI_API_KEY ? "OpenAI API Key loaded.....!" : "Not Loaded"
 );
 
 // Initialize model
@@ -21,22 +26,6 @@ const model = new ChatOpenAI({
   apiKey: openAIKey,
   model: "gpt-4o",
 });
-
-async function validateApiKey() {
-  try {
-    console.log("Validating OpenAI API key...");
-    const response = await model.invoke("Hello, world!"); // Simple test call
-    console.log("API key is valid. Response:", response.content);
-  } catch (error) {
-    console.error("API key validation failed:", error);
-    throw new Error(
-      "Invalid OpenAI API key. Please check your environment variables."
-    );
-  }
-}
-
-// Call the validation function
-validateApiKey();
 
 // indexName from PineCone
 export const indexName = "interact-with-ai-index";
@@ -87,18 +76,22 @@ async function generateDocs(docId: string) {
 
 export async function generateEmbeddingInVectorStore(docId: string) {
   const { userId } = await auth();
-  if (!docId) return;
-  if (!userId) {
+  // if (!userId) {
+  //   throw new Error(
+  //     "User not Authenticated.....! [generateEmbeddingInPineconeVectorStore]"
+  //   );
+  // }
+  if (!docId) {
     throw new Error(
-      "User not Authenticated [generateEmbeddingInPineconeVectorStore]"
+      "DocumentID Required.....! [generateEmbeddingInPineconeVectorStore]"
     );
   }
-  console.log(`Generating Embedding from DOC : ${docId}`);
+  console.log(`Generating Embedding from DOC - ID : ${docId}`);
 
   const embeddings = new OpenAIEmbeddings({
     apiKey: openAIKey,
   });
-  // Connect to Pinecone with indexName
+
   const index = await pineconeClient.index(indexName);
 
   const isNameSpaceExist = await checkSpaceExist(index, docId);
@@ -127,6 +120,56 @@ export async function generateEmbeddingInVectorStore(docId: string) {
         pineconeIndex: index,
       }
     );
-    return pineconeVectorStore;
   }
+  return pineconeVectorStore;
 }
+export const generateReply = async (
+  docId: string,
+  question: string
+): Promise<string> => {
+  const pineconeVectorStore = generateEmbeddingInVectorStore(docId);
+  if (!pineconeVectorStore) {
+    throw new Error("PINECONE is not available....!");
+  }
+  const retriever = (await pineconeVectorStore).asRetriever();
+  const chathistory: any[] = [];
+  const historyAwarePrompt = ChatPromptTemplate.fromMessages([
+    ...chathistory,
+    ["user", "{input}"],
+    [
+      "user",
+      "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation",
+    ],
+  ]);
+  const historyAwareRetrieverChain = await createHistoryAwareRetriever({
+    llm: model,
+    retriever,
+    rephrasePrompt: historyAwarePrompt,
+  });
+  const historyAwareRetrievalPrompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      "Answer the user's questions based on the below context:\n\n{context}",
+    ],
+
+    ...chathistory,
+
+    ["user", "{input}"],
+  ]);
+  const historyAwareCombineDocsChain = await createStuffDocumentsChain({
+    llm: model,
+    prompt: historyAwareRetrievalPrompt,
+  });
+  const conversationalRetrievalChain = await createRetrievalChain({
+    retriever: historyAwareRetrieverChain,
+    combineDocsChain: historyAwareCombineDocsChain,
+  });
+
+  const reply = await conversationalRetrievalChain.invoke({
+    chat_history: chathistory,
+    input: question,
+  });
+
+  console.log(reply.answer);
+  return reply.answer;
+};
