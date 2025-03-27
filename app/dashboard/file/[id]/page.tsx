@@ -1,7 +1,6 @@
 "use client";
 import ChatBox from "@/components/ChatBox";
 import PDFView from "@/components/PDFView";
-import { Document } from "@/models/model";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";

@@ -2,6 +2,7 @@ import { useUser } from "@clerk/nextjs";
 import React, {
   FormEvent,
   startTransition,
+  useEffect,
   useRef,
   useState,
   useTransition,
@@ -11,12 +12,13 @@ import { Loader2Icon } from "lucide-react";
 import { Input } from "./ui/input";
 import ChatMessage from "./ChatMessage";
 import { askQuestion } from "@/actions/askQuestion";
+import axios from "axios";
 
 export interface Message {
   id?: String;
   role: "human" | "ai" | "placeholder";
   message: string;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 const ChatBox = ({ id }: { id: string }) => {
@@ -48,6 +50,7 @@ const ChatBox = ({ id }: { id: string }) => {
     startTransition(async () => {
       const reply = await askQuestion(id, userQuestion);
       if (reply) {
+        setMessages((prev) => prev.filter((e) => e.message !== "Thinking..."));
         setMessages((prev) => [
           ...prev,
           { createdAt: new Date(), role: "ai", message: reply },
@@ -56,6 +59,24 @@ const ChatBox = ({ id }: { id: string }) => {
       setLoading(false);
     });
   };
+  useEffect(() => {
+    console.log("Running...!");
+
+    const fetchHistoryChats = async () => {
+      try {
+        const { data } = await axios.get(
+          `http://localhost:3000/api/chats/${id}`
+        );
+        console.log("History : ", data.data.chats);
+        setMessages(data.data.chats);
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    };
+
+    if (id) fetchHistoryChats();
+  }, [id]); // ✅ Include `id` in dependencies
+
   return (
     <div className="flex flex-col h-full overflow-scroll">
       <div className="flex-1 w-full">

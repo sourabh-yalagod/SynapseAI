@@ -1,4 +1,5 @@
-import { Document } from "@/models/model";
+import { deleteCloudinaryAsset, getPublicIdFromUrl } from "@/lib/cloudinary";
+import { Chat, Document } from "@/models/model";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -12,12 +13,7 @@ export async function DELETE(
       { status: 401 }
     );
   }
-  if (!documentId) {
-    return NextResponse.json(
-      { error: "Document ID not Found....!" },
-      { status: 401 }
-    );
-  }
+
   const document = await Document.findByIdAndDelete(documentId);
   if (!document) {
     return NextResponse.json(
@@ -25,6 +21,17 @@ export async function DELETE(
       { status: 401 }
     );
   }
+  await Chat.deleteOne({ documentId });
+  const DocumentPublicId = getPublicIdFromUrl(document.url);
+  console.log(DocumentPublicId);
+
+  const deleteCloudinaryAssetResponse = await deleteCloudinaryAsset(
+    DocumentPublicId
+  );
+  console.log(
+    "deleteCloudinaryAssetResponse : ",
+    deleteCloudinaryAssetResponse
+  );
 
   return NextResponse.json({
     data: document,

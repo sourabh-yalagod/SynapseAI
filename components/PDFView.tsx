@@ -2,13 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import {
   ArrowBigLeft,
   ArrowBigRight,
   Download,
   Loader2Icon,
-  Minus,
-  Plus,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";

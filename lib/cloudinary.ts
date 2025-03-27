@@ -33,4 +33,21 @@ export const uploadOnCloudinary = async (
   });
 };
 
+export const deleteCloudinaryAsset = async (publicId: string) => {
+  try {
+    const response = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "raw",
+    });
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+export const getPublicIdFromUrl = (url: string) => {
+  const parts: string[] = url.split("/");
+  const fileName: any = parts.pop();
+  return fileName.split(".")[0];
+};
+
+// Example Usage
 export { cloudinary };
