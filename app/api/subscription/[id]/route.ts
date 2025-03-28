@@ -1,4 +1,5 @@
 import { Subscription } from "@/models/model";
+import { subscribe } from "diagnostics_channel";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -43,12 +44,22 @@ export async function POST(req: NextRequest) {
     isValid,
     userId,
   });
-
+  const subscription = await Subscription.findOne({ userId });
+  if (subscription) {
+    subscription.customerId = customerId;
+    subscription.isValid = isValid;
+    await subscription.save();
+    return NextResponse.json(
+      { message: "Subscription record updated in DB", data: subscription },
+      { status: 201 }
+    );
+  }
   const newSubscription = await Subscription.create({
     customerId,
     isValid,
     userId,
   });
+
   if (!newSubscription) {
     return NextResponse.json(
       { error: "Subscription record failed to store in DB" },

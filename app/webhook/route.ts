@@ -7,23 +7,10 @@ import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
   console.log("Hey this is From webhook");
-  await auth.protect();
   const header = await headers();
   const body = await req.text();
-  const { userId } = await auth();
-  console.log(userId);
 
-  if (!userId) {
-    return NextResponse.json(
-      { error: "user must be authenticated" },
-      { status: 401 }
-    );
-  }
-  console.log("🚀 ~ POST ~ body:", body);
-  console.log("🚀 ~ POST ~ UserID:", userId);
   const signature = header.get("stripe-signature");
-  console.log(signature);
-
   if (!signature) {
     return NextResponse.json(
       { error: "Stripe Signature not FOUND....!" },
@@ -38,8 +25,12 @@ export async function POST(req: NextRequest) {
     );
   }
   let event: Stripe.Event;
+  let customerId = null;
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecrete);
+    const session = event.data.object as Stripe.Checkout.Session;
+    customerId = session.customer as string;
+    console.log("customerId : ", customerId);
   } catch (error) {
     return NextResponse.json(
       { error: error || "Stripe Event Error....!" },
@@ -52,11 +43,11 @@ export async function POST(req: NextRequest) {
     case "payment_intent.succeeded": {
       console.log("payment_intent.succeeded");
       console.log("checkout.session.completed");
-      const subscription = await Subscription.findOneAndUpdate(
-        { userId },
-        { isValid: true },
-        { new: true }
-      );
+      const subscription = await Subscription.findOne({
+        customerId,
+      });
+      if (subscription) subscription.isValid = true;
+      await subscription.save();
       console.log("🚀 ~ POST ~ subscription:", subscription);
       return NextResponse.json({ message: "webhook received" });
     }
@@ -64,15 +55,17 @@ export async function POST(req: NextRequest) {
     case "subscription_schedule.canceled": {
       console.log("payment_intent.deleted");
       console.log("checkout.session.cancled");
-      const subscription = await Subscription.findOneAndUpdate(
-        { userId },
-        { isValid: false },
-        { new: true }
-      );
+
+      const subscription = await Subscription.findOne({
+        customerId,
+      });
+
+      if (subscription) subscription.isValid = false;
+      await subscription.save();
       console.log("🚀 ~ POST ~ subscription:", subscription);
-      return NextResponse.json({ message: "Done with the WORK" });
+      return NextResponse.json({ message: "webhook received" });
     }
     default:
-      NextResponse.json({ message: "webhook received" });
+      return NextResponse.json({ message: "webhook received" });
   }
 }

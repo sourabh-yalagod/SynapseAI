@@ -12,10 +12,8 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
-import axios from "axios";
 
 config();
-// Debugging: Check if the API key is loaded
 console.log(
   "OPENAI_API_KEY:",
   process.env.OPENAI_API_KEY ? "OpenAI API Key loaded.....!" : "Not Loaded"
@@ -77,11 +75,11 @@ async function generateDocs(docId: string) {
 
 export async function generateEmbeddingInVectorStore(docId: string) {
   const { userId } = await auth();
-  // if (!userId) {
-  //   throw new Error(
-  //     "User not Authenticated.....! [generateEmbeddingInPineconeVectorStore]"
-  //   );
-  // }
+  if (!userId) {
+    throw new Error(
+      "User not Authenticated.....! [generateEmbeddingInPineconeVectorStore]"
+    );
+  }
   if (!docId) {
     throw new Error(
       "DocumentID Required.....! [generateEmbeddingInPineconeVectorStore]"
@@ -136,9 +134,9 @@ export const generateReply = async (
   const chathistory: any[] = [];
   const historyAwarePrompt = ChatPromptTemplate.fromMessages([
     ...chathistory,
-    ["user", "{input}"],
+    ["human", "{input}"],
     [
-      "user",
+      "human",
       "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation",
     ],
   ]);
@@ -155,7 +153,7 @@ export const generateReply = async (
 
     ...chathistory,
 
-    ["user", "{input}"],
+    ["human", "{input}"],
   ]);
   const historyAwareCombineDocsChain = await createStuffDocumentsChain({
     llm: model,
@@ -172,5 +170,5 @@ export const generateReply = async (
   });
 
   console.log(reply.answer);
-  return reply.answer;
+  return reply?.answer;
 };
