@@ -1,64 +1,66 @@
 "use client";
 
+import { useGetDocumentsQuery, useGetSubscriptionQuery } from "@/app/state/api";
 import { axiosInstance } from "@/lib/axiosInstance";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
+import { skip } from "node:test";
 import { useEffect, useState } from "react";
 
 const PRO = 10;
 const TRIAL = 2;
 
 const useSubscription = () => {
+  const [documentCount, setDocumentCount] = useState(0);
   const { user } = useUser();
   const [hasActiveMembership, setHasActiveMembership] = useState<
     boolean | null
   >(null);
   const [isOverFileLimit, setIsOverFileLimit] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    console.log("1st one ");
+  const { data: documents } = useGetDocumentsQuery(user?.id, {
+    skip: !user || !user.id,
+  });
 
-    const fetchSubscription = async () => {
-      try {
-        const { data } = await axiosInstance.get(
-          `/api/subscription/${user.id}`
-        );
-        setHasActiveMembership(data?.data ?? null);
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-      }
-    };
-
-    fetchSubscription();
-  }, [user?.id]);
+  const {
+    data: subscription,
+    error,
+    isLoading,
+  } = useGetSubscriptionQuery(user?.id, {
+    skip: !user || !user.id,
+  });
 
   useEffect(() => {
-    if (hasActiveMembership === null) return;
+    console.log(
+      "🚀 ~ useEffect ~ data?.subscription?.isValid:",
+      subscription?.subscription?.isValid
+    );
+    setHasActiveMembership(subscription);
+  }, [user?.id, subscription]);
 
-    const fetchDocuments = async () => {
-      try {
-        const { data } = await axiosInstance.get(`/api/document`);
-        if (data?.data) {
-          console.log(data?.data.length);
+  useEffect(() => {
+    if (hasActiveMembership === null && !documents?.data) return;
 
-          setIsOverFileLimit(
-            hasActiveMembership
-              ? data.data.length > PRO
-              : data.data.length >= TRIAL
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching documents:", error);
-      }
-    };
+    setDocumentCount(documents?.data?.length);
+    setIsOverFileLimit(
+      hasActiveMembership
+        ? documents?.data.length >= PRO
+        : documents?.data.length >= TRIAL
+    );
+  }, [hasActiveMembership, user?.id, documents]);
 
-    fetchDocuments();
-  }, [hasActiveMembership, user?.id]);
-
-  console.log({ hasActiveMembership, isOverFileLimit });
-
-  return { hasActiveMembership, isOverFileLimit };
+  // console.log("🚀 ~ useSubscription ~  hasActiveMembership", {
+  //   isOverFileLimit,
+  //   documentCount,
+  //   isSubscriptionLoading: isLoading,
+  //   hasActiveMembership,
+  // });
+  return {
+    hasActiveMembership,
+    isOverFileLimit,
+    documentCount,
+    isSubscriptionLoading: isLoading,
+  };
 };
 
 export default useSubscription;

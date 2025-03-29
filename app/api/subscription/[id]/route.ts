@@ -7,7 +7,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const userId = (await params).id;
-  console.log(userId);
   if (!userId) {
     return NextResponse.json(
       { error: "UserId Required....!" },

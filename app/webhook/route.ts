@@ -26,11 +26,12 @@ export async function POST(req: NextRequest) {
   }
   let event: Stripe.Event;
   let customerId = null;
+  let userId = null;
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecrete);
     const session = event.data.object as Stripe.Checkout.Session;
     customerId = session.customer as string;
-    console.log("customerId : ", customerId);
+    userId = session?.metadata?.userId as string;
   } catch (error) {
     return NextResponse.json(
       { error: error || "Stripe Event Error....!" },
@@ -41,28 +42,40 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed":
     case "payment_intent.succeeded": {
-      console.log("payment_intent.succeeded");
-      console.log("checkout.session.completed");
       const subscription = await Subscription.findOne({
         customerId,
       });
       if (subscription) subscription.isValid = true;
       await subscription.save();
-      console.log("🚀 ~ POST ~ subscription:", subscription);
       return NextResponse.json({ message: "webhook received" });
     }
     case "customer.subscription.deleted":
-    case "subscription_schedule.canceled": {
-      console.log("payment_intent.deleted");
-      console.log("checkout.session.cancled");
-
+    case "subscription_schedule.canceled":
+    case "subscription_schedule.expiring": {
       const subscription = await Subscription.findOne({
         customerId,
       });
 
       if (subscription) subscription.isValid = false;
       await subscription.save();
-      console.log("🚀 ~ POST ~ subscription:", subscription);
+      return NextResponse.json({ message: "webhook received" });
+    }
+    case "customer.subscription.updated": {
+      console.log("customer.subscription.updated");
+      const previousAttributes: any = event.data.previous_attributes;
+      const subEvent: any = event.data.object;
+      if (
+        previousAttributes?.cancel_at_period_end &&
+        !subEvent.cancel_at_period_end
+      ) {
+        console.log("User renewed the subscription.");
+        const subscription = await Subscription.findOneAndDelete({
+          $or: [{ customerId }, { userId }],
+        });
+        console.log("subscription", subscription);
+        return NextResponse.json({ message: "webhook received", subscription });
+      }
+
       return NextResponse.json({ message: "webhook received" });
     }
     default:

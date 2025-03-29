@@ -1,10 +1,12 @@
 "use client";
 import { createCheckoutSession } from "@/actions/createCheckoutSession";
+import { subscriptionPortal } from "@/actions/subscriptionPortal";
 import { Button } from "@/components/ui/button";
 import useSubscription from "@/hooks/useSubscription";
 import { getStripePromise } from "@/lib/stripe-js";
 import { useUser } from "@clerk/nextjs";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import React, { useState, useTransition } from "react";
 export interface userDetail {
@@ -12,9 +14,11 @@ export interface userDetail {
   name: string;
 }
 const PricingModel = () => {
+  const router = useRouter();
   const { user } = useUser();
   const [loading, setLoading] = useState(false);
-  const { hasActiveMembership, isOverFileLimit } = useSubscription();
+  const { hasActiveMembership, isOverFileLimit, isSubscriptionLoading } =
+    useSubscription();
   const [isPending, startTransition] = useTransition();
   const handleUpgrade = () => {
     if (!user) return;
@@ -30,9 +34,9 @@ const PricingModel = () => {
       const stripePromise = await getStripePromise();
 
       if (hasActiveMembership) {
+        const portalLink = await subscriptionPortal();
+        router.push(portalLink);
       } else {
-        console.log("here now");
-
         const sessionId = await createCheckoutSession(userDetail);
         console.log(sessionId);
         if (sessionId) await stripePromise?.redirectToCheckout({ sessionId });
@@ -104,14 +108,16 @@ const PricingModel = () => {
 
             <Button
               className="bg-indigo-600 dark:bg-indigo-500 w-full text-white dark:text-gray-100 shadow-sm hover:bg-indigo-500 dark:hover:bg-indigo-400 mt-4 block rounded-md text-center text-sm font-semibold focus-visible:outline-indigo-600 transition-colors"
-              disabled={loading || isPending}
+              disabled={loading || isPending || isSubscriptionLoading}
               onClick={handleUpgrade}
             >
-              {isPending || loading
-                ? "Loading..."
-                : hasActiveMembership
-                ? "Manage Plan"
-                : "Upgrade to Pro"}
+              {isPending || loading || isSubscriptionLoading ? (
+                <Loader className="animate-spin mx-auto" />
+              ) : hasActiveMembership ? (
+                "Manage Plan"
+              ) : (
+                "Upgrade to Pro"
+              )}
             </Button>
 
             <ul

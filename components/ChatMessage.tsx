@@ -2,47 +2,59 @@
 
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { BotIcon, Loader2Icon } from "lucide-react";
+import { BotIcon, Loader, Loader2Icon, Rocket } from "lucide-react";
 import Markdown from "react-markdown";
 import { Message } from "./ChatBox";
+import { useEffect, useRef } from "react";
 
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({
+  message,
+  isLoading,
+}: {
+  message: Message;
+  isLoading: boolean;
+}) {
+  const bottomRef = useRef<HTMLDivElement>(null);
   const isHuman = message.role === "human";
   const { user } = useUser();
-
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [message]);
   return (
-    <div className={`chat ${isHuman ? "chat-end" : "chat-start"}`}>
-      <div className="chat-image avatar">
-        <div className="w-10 rounded-full">
-          {isHuman ? (
-            user?.imageUrl && (
+    <div>
+      {message.role === "human" ? (
+        <div className="flex flex-1 w-full">
+          {user?.imageUrl && (
+            <div className="w-full space-y-1 py-1">
               <Image
                 src={user?.imageUrl}
-                alt="Profile Picture"
-                width={40}
-                height={40}
+                width={25}
+                height={25}
                 className="rounded-full"
+                alt="UserImage"
               />
-            )
-          ) : (
-            <div className="h-10 w-10 bg-indigo-600 flex items-center justify-center">
-              <BotIcon className="text-white h-7 w-7 " />
+              <p className="bg-slate-800 p-1 flex-wrap bg-opacity-80 font-light text-sm rounded-md w-full">
+                {message.role == "human" && message.message}
+              </p>
             </div>
           )}
         </div>
-      </div>
-
-      <div
-        className={`chat-bubble prose ${isHuman && "bg-indigo-600 text-white"}`}
-      >
-        {message.message === "Thinking..." ? (
-          <div className="flex items-center justify-center">
-            <Loader2Icon className="animate-spin h-5 w-5 text-white" />
+      ) : (
+        <div className="w-full space-y-1 py-1">
+          {message.message == "Thinking..." ? (
+            <Rocket className="animate-ping" />
+          ) : (
+            <Rocket />
+          )}
+          <div className="bg-slate-800 p-1 flex items-center gap-2 flex-wrap bg-opacity-80 font-light text-sm rounded-md w-full">
+            {message.role == "ai" && message.message}
+            {message.message == "Thinking..." && (
+              <Loader className="animate-spin" color="gray" />
+            )}
           </div>
-        ) : (
-          <Markdown>{message.message}</Markdown>
-        )}
-      </div>
+        </div>
+      )}
+      <div ref={bottomRef}></div>
     </div>
   );
 }

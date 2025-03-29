@@ -37,6 +37,7 @@ export const createCheckoutSession = async (
         },
       ],
       mode: "subscription",
+      metadata: { userId },
       customer: stripeCustomerId,
       success_url: `${getBaseUrl()}/dashboard?payment=successfull`,
       cancel_url: `${getBaseUrl()}/upgrade?payment=failed`,

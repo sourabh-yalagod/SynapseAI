@@ -5,13 +5,37 @@ import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import useSubscription from "@/hooks/useSubscription";
+import { toast } from "sonner";
 
 const Upload = () => {
   const router = useRouter();
+  const { isOverFileLimit, hasActiveMembership, documentCount } =
+    useSubscription();
+  console.log({ isOverFileLimit, hasActiveMembership, documentCount });
+
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<Boolean>(false);
   const onDrop = useCallback(async (files: any[]) => {
     if (!files[0]) return;
+    if (isOverFileLimit) {
+      const message = !hasActiveMembership
+        ? `You have exceeded the Free tier limit please upgrade to pro to upload 20 files...!`
+        : `You have exceeded the PRO tier File limit please remove the unwanted File to upload new one...!`;
+      const redirect = hasActiveMembership
+        ? `/dashboard`
+        : `/dashboard/upgrade`;
+      toast.warning(message, {
+        action: {
+          label: "upgrade TO PRO",
+          onClick: () => router.push(redirect),
+        },
+        duration: 50000,
+      });
+      console.log("File limit Exceed Please...");
+
+      return;
+    }
     setLoading(true);
     const file = files[0];
     console.log("FILE : ", file);
@@ -36,6 +60,32 @@ const Upload = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
   return (
     <div className="w-full min-h-screen px-10">
+      <motion.h1
+        initial={{ x: -1000, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ bounce: 5, damping: 10 }}
+        className="text-center text-2xl sm:text-3xl pt-10"
+      >
+        Drag and Drop yout PDF File HERE . . .
+      </motion.h1>
+      <div>
+        {isOverFileLimit ? (
+          <h1>
+            Your File limit Exceed :{" "}
+            {documentCount
+              .toString()
+              .concat(hasActiveMembership ? " / 20" : " / 2")}
+          </h1>
+        ) : (
+          <h1 className="flex gap-2">
+            You Still can upload {20 - documentCount} Files [
+            {documentCount
+              .toString()
+              .concat(hasActiveMembership ? " / 20" : " / 2")}
+            ]
+          </h1>
+        )}
+      </div>
       <motion.div
         initial={{ scale: 0, y: -500, opacity: 0 }}
         animate={{ scale: 1, y: 50, opacity: 1 }}

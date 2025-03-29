@@ -3,9 +3,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Delete, Trash } from "lucide-react";
+import { Delete, File, Loader, Trash } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useDeleteDocumentMutation } from "@/app/state/api";
+import { useState } from "react";
 
 interface DocumentProps {
   _id: string;
@@ -16,19 +18,24 @@ interface DocumentProps {
   url: string;
   name: string;
   username: string;
-  coverImage?: string; // New cover image property (optional)
+  coverImage?: string;
 }
-const handleDelete = async (documentId: string) => {
-  console.log("documentId : ", documentId);
-  if (!documentId) return;
-  try {
-    const { data } = await axios.delete(`/api/delete-document/${documentId}`);
-    console.log(data);
-  } catch (error) {
-    console.log(error);
-  }
-};
 const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
+  const [loading, setLoading] = useState(false);
+  const [deleteDocument] = useDeleteDocumentMutation();
+  const handleDelete = async (documentId: string) => {
+    if (!documentId) return;
+    try {
+      setLoading(true);
+      const { data, error } = await deleteDocument(documentId);
+
+      console.log("🚀 ~ handleDelete ~ data OR error:", { data, error });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const defaultCover =
     "https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"; // Default icon
   const router = useRouter();
@@ -38,22 +45,39 @@ const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="p-4 shadow-md rounded-lg border border-gray-200 dark:border-gray-700"
+      className="relative p-4 shadow-md rounded-lg border border-gray-200 dark:border-gray-700"
     >
       {/* Cover Image */}
-      <div
-        onClick={() => router.push(`/dashboard/file/${document?._id}`)}
-        className="relative w-full h-48 rounded-md overflow-hidden mb-4"
-      >
-        <Trash
-          onClick={() => handleDelete(document._id)}
-          className="absolute z-10 cursor-pointer bg-red-600 size-6 p-[2px] hover:scale-105 transition-all rounded-[2px] top-1 right-2"
-        />
+      <div className="grid w-full h-48 rounded-md overflow-hidden">
+        <div className="absolute z-10 top-4 right-2 justify-around flex gap-4">
+          <div
+            onClick={() => handleDelete(document._id)}
+            className="flex gap-1 bg-red-600 py-1 px-2 hover:scale-95 transition cursor-pointer rounded-md items-center"
+          >
+            {loading ? (
+              <div className="grid place-items-center">
+                <Loader className="animate-spin size-5" />
+              </div>
+            ) : (
+              <>
+                <label>Delete File</label>
+                <Trash className="size-5" />
+              </>
+            )}
+          </div>
+          <div
+            className="flex gap-1 bg-green-600 py-1 px-2 hover:scale-95 transition cursor-pointer rounded-md items-center"
+            onClick={() => router.push(`/dashboard/file/${document?._id}`)}
+          >
+            <label className="text-white italic"> Chat with </label>
+            <File className="size-5" />
+          </div>
+        </div>
         <Image
           src={document.coverImage || defaultCover}
           alt="Document Cover"
           fill
-          className="object-center"
+          className="object-center scale-50 pb-10"
         />
       </div>
 
@@ -90,9 +114,6 @@ const DocumentCard: React.FC<{ document: DocumentProps }> = ({ document }) => {
         >
           View Document
         </Link>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          ID: {document._id}
-        </span>
       </div>
     </motion.div>
   );

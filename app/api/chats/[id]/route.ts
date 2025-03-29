@@ -11,7 +11,7 @@ export async function POST(
 
     const body = await req.json();
     const { humanMessage, aiMessage } = body;
-    const { id } = await params;
+    const id = (await params).id;
 
     if (!humanMessage || !aiMessage || !id) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
@@ -56,7 +56,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const documentId = await params.id;
+  const documentId = (await params).id;
   console.log("documentId : ", documentId);
 
   if (!documentId) {
