@@ -19,6 +19,8 @@ const PricingModel = () => {
   const [loading, setLoading] = useState(false);
   const { hasActiveMembership, isOverFileLimit, isSubscriptionLoading } =
     useSubscription();
+  console.log("hasActiveMembership : ", hasActiveMembership);
+
   const [isPending, startTransition] = useTransition();
   const handleUpgrade = () => {
     if (!user) return;

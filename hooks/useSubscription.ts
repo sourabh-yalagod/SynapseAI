@@ -35,7 +35,7 @@ const useSubscription = () => {
       "🚀 ~ useEffect ~ data?.subscription?.isValid:",
       subscription?.subscription?.isValid
     );
-    setHasActiveMembership(subscription);
+    setHasActiveMembership(subscription?.subscription?.isValid);
   }, [user?.id, subscription]);
 
   useEffect(() => {

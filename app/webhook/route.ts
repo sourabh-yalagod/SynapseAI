@@ -45,8 +45,10 @@ export async function POST(req: NextRequest) {
       const subscription = await Subscription.findOne({
         customerId,
       });
-      if (subscription) subscription.isValid = true;
-      await subscription.save();
+      if (subscription) {
+        subscription.isValid = true;
+        await subscription.save();
+      }
       return NextResponse.json({ message: "webhook received" });
     }
     case "customer.subscription.deleted":
@@ -56,24 +58,50 @@ export async function POST(req: NextRequest) {
         customerId,
       });
 
-      if (subscription) subscription.isValid = false;
-      await subscription.save();
+      if (subscription) {
+        subscription.isValid = false;
+        await subscription.save();
+      }
       return NextResponse.json({ message: "webhook received" });
     }
     case "customer.subscription.updated": {
-      console.log("customer.subscription.updated");
       const previousAttributes: any = event.data.previous_attributes;
       const subEvent: any = event.data.object;
+      console.log("-----------------------------------------------");
+      console.log("-----------------------------------------------");
+
+      if (subEvent?.canceled_at && subEvent?.cancel_at_period_end) {
+        const subscription = await Subscription.findOneAndUpdate(
+          {
+            $or: [{ customerId }, { userId }],
+          },
+          { isValid: false },
+          { new: true }
+        );
+        console.log("subscription canceled", subscription);
+        return NextResponse.json({
+          message: "webhook received",
+          subscription,
+        });
+      }
+
       if (
         previousAttributes?.cancel_at_period_end &&
         !subEvent.cancel_at_period_end
       ) {
-        console.log("User renewed the subscription.");
-        const subscription = await Subscription.findOneAndDelete({
-          $or: [{ customerId }, { userId }],
+        const subscription = await Subscription.findOneAndUpdate(
+          {
+            $or: [{ customerId }, { userId }],
+          },
+          { isValid: true },
+          { new: true }
+        );
+
+        console.log("subscription renewd", subscription);
+        return NextResponse.json({
+          message: "webhook received",
+          subscription,
         });
-        console.log("subscription", subscription);
-        return NextResponse.json({ message: "webhook received", subscription });
       }
 
       return NextResponse.json({ message: "webhook received" });
