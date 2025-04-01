@@ -1,15 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const api = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_BASEURL }),
-  tagTypes: ["documents", "subscription"],
+  tagTypes: ["documents", "subscription", "chats"],
   endpoints: (build) => ({
     //   ----------------------------------------------
     //                  Document API calls
     //   ----------------------------------------------
     getDocuments: build.query({
-      query: (userId) => ({
+      query: () => ({
         url: `/api/document`,
-        // params: { userId },
       }),
       providesTags: ["documents"],
     }),
@@ -18,7 +17,13 @@ export const api = createApi({
         url: `/api/document/${docId}`,
         method: "DELETE",
         params: { documentId: docId },
-        providesTags: ["documents"],
+      }),
+      invalidatesTags: ["documents"],
+    }),
+    getDocument: build.query({
+      query: (documentId) => ({
+        url: `/api/document/${documentId}`,
+        params: { documentId },
       }),
     }),
     //   ----------------------------------------------
@@ -26,13 +31,18 @@ export const api = createApi({
     //   ----------------------------------------------
     newChat: build.mutation({
       query: (payload) => ({
-        url: `/api/chats/${payload?.userId}`,
+        url: `/api/chats/${payload?.documentId}`,
         method: "POST",
         body: payload,
       }),
+      invalidatesTags: ["chats"],
     }),
     getChats: build.query({
-      query: (userId) => ({ url: `/api/chats/${userId}`, params: { userId } }),
+      query: (userId) => ({
+        url: `/api/chats/${userId}`,
+        params: { id: userId },
+      }),
+      providesTags: ["chats"],
     }),
     //   ----------------------------------------------
     //                  Subscription API calls
@@ -60,6 +70,7 @@ export const {
   // documents
   useGetDocumentsQuery,
   useDeleteDocumentMutation,
+  useGetDocumentQuery,
   // chats
   useGetChatsQuery,
   useNewChatMutation,

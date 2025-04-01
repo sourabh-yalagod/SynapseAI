@@ -124,14 +124,20 @@ export async function generateEmbeddingInVectorStore(docId: string) {
 }
 export const generateReply = async (
   docId: string,
-  question: string
+  question: string,
+  chatsHistory: any[] = []
 ): Promise<string> => {
   const pineconeVectorStore = generateEmbeddingInVectorStore(docId);
   if (!pineconeVectorStore) {
     throw new Error("PINECONE is not available....!");
   }
   const retriever = (await pineconeVectorStore).asRetriever();
-  const chathistory: any[] = [];
+  const chathistory: any[] = chatsHistory?.map(({ role, message }) => [
+    role,
+    message,
+  ]);
+  console.log(chathistory);
+
   const historyAwarePrompt = ChatPromptTemplate.fromMessages([
     ...chathistory,
     ["human", "{input}"],

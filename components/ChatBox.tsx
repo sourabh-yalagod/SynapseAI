@@ -16,6 +16,8 @@ import axios from "axios";
 import useSubscription from "@/hooks/useSubscription";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useGetChatsQuery, useNewChatMutation } from "@/app/state/api";
+import { axiosInstance } from "@/lib/axiosInstance";
 
 export interface Message {
   id?: String;
@@ -27,20 +29,29 @@ export interface Message {
 const ChatBox = ({ id }: { id: string }) => {
   const router = useRouter();
   const { user } = useUser();
+  const {
+    data: chatsPayload,
+    isLoading: chatsLoading,
+    error: chatsError,
+  } = useGetChatsQuery(id, {
+    skip: !user?.id,
+  });
+  console.log("useGetChatsQuery : ", {
+    chatsPayload,
+    chatsLoading,
+    chatsError,
+  });
+
   const [input, setInput] = useState<string | null>(null);
   const { hasActiveMembership } = useSubscription();
-  const [chatsLoading, setChatsLoading] = useState(false);
+  const [newChat] = useNewChatMutation();
   const [chatCount, setChatCount] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [isPending] = useTransition();
   const bottomOfChatRef = useRef<HTMLDivElement | null>(null);
-  console.log("chatCount : ", chatCount);
-  console.log("hasActiveMembership : ", hasActiveMembership);
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    console.log("chatCount : ", chatCount);
-    console.log("hasActiveMembership : ", hasActiveMembership);
     if (!input) return;
 
     if (chatCount >= 6 && !hasActiveMembership) {
@@ -75,39 +86,36 @@ const ChatBox = ({ id }: { id: string }) => {
     ]);
     console.log("🚀 ~ handleSubmit ~ userQuestion:", userQuestion);
     startTransition(async () => {
-      const reply = await askQuestion(id, userQuestion);
+      const reply = await askQuestion(id, userQuestion, messages);
       if (reply) {
-        setMessages((prev) => prev.filter((e) => e.message !== "Thinking..."));
+        setMessages((prev) => prev?.filter((e) => e.message !== "Thinking..."));
         setMessages((prev) => [
           ...prev,
           { createdAt: new Date(), role: "ai", message: reply },
         ]);
+        const humanMessage = {
+          message: userQuestion,
+          role: "human",
+        };
+        const aiMessage = {
+          message: reply,
+          role: "ai",
+        };
+        const { data } = await newChat({
+          humanMessage,
+          aiMessage,
+          documentId: id,
+        });
+        console.log("New Chat Message : ", data);
       }
       setChatCount(messages?.length || 0);
       setLoading(false);
     });
   };
   useEffect(() => {
-    console.log("Running...!");
-
-    const fetchHistoryChats = async () => {
-      try {
-        setChatsLoading(true);
-        const { data } = await axios.get(
-          `http://localhost:3000/api/chats/${id}`
-        );
-        console.log("History : ", data.data.chats);
-        setMessages(data.data.chats);
-        setChatCount(data?.data?.chats?.length);
-      } catch (error) {
-        console.error("Error fetching chat history:", error);
-      } finally {
-        setChatsLoading(false);
-      }
-    };
-
-    if (id) fetchHistoryChats();
-  }, [id]);
+    setMessages(chatsPayload?.data?.chats);
+    setChatCount(chatsPayload?.data?.chats?.length);
+  }, [chatsPayload, chatsError]);
 
   return (
     <div className="flex flex-col h-full overflow-scroll">
@@ -118,7 +126,7 @@ const ChatBox = ({ id }: { id: string }) => {
           </div>
         ) : (
           <div className="p-5">
-            {messages.length === 0 && (
+            {messages?.length === 0 && (
               <ChatMessage
                 isLoading={false}
                 key={"placeholder"}
@@ -129,7 +137,7 @@ const ChatBox = ({ id }: { id: string }) => {
                 }}
               />
             )}{" "}
-            {messages.map((message, index) => (
+            {messages?.map((message, index) => (
               <ChatMessage
                 isLoading={chatsLoading}
                 key={index}

@@ -1,4 +1,5 @@
 "use client";
+import { useGetDocumentQuery } from "@/app/state/api";
 import ChatBox from "@/components/ChatBox";
 import PDFView from "@/components/PDFView";
 import axios from "axios";
@@ -8,19 +9,22 @@ import React, { useEffect, useState } from "react";
 const File = () => {
   const params: { id: string } = useParams();
   const id = params.id;
+  const {
+    data: document,
+    error,
+    isLoading,
+  } = useGetDocumentQuery(id, { skip: !id });
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   useEffect(() => {
     (async () => {
       if (params.id) {
-        const { data } = await axios.get(`/api/document/${params.id}`);
-        console.log(data);
-        setUrl(data?.data?.url);
-        setName(data?.data?.name);
+        setUrl(document?.data?.url);
+        setName(document?.data?.name);
       }
     })();
-  }, [params.id]);
+  }, [document]);
   return (
     <div className="grid lg:grid-cols-5 h-full overflow-hidden">
       {/* Right */}

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { Chat, Document } from "@/models/model";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
