@@ -46,7 +46,7 @@ const ChatBox = ({ id }: { id: string }) => {
   const { hasActiveMembership } = useSubscription();
   const [newChat] = useNewChatMutation();
   const [chatCount, setChatCount] = useState(0);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isPending] = useTransition();
   const bottomOfChatRef = useRef<HTMLDivElement | null>(null);

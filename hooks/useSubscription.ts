@@ -49,12 +49,6 @@ const useSubscription = () => {
     );
   }, [hasActiveMembership, user?.id, documents]);
 
-  // console.log("🚀 ~ useSubscription ~  hasActiveMembership", {
-  //   isOverFileLimit,
-  //   documentCount,
-  //   isSubscriptionLoading: isLoading,
-  //   hasActiveMembership,
-  // });
   return {
     hasActiveMembership,
     isOverFileLimit,

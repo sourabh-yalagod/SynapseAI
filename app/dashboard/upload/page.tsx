@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import useSubscription from "@/hooks/useSubscription";
 import { toast } from "sonner";
+import { axiosInstance } from "@/lib/axiosInstance";
+import { useUploadFileMutation } from "@/app/state/api";
 
 const Upload = () => {
   const router = useRouter();
@@ -14,6 +16,7 @@ const Upload = () => {
     useSubscription();
   console.log({ isOverFileLimit, hasActiveMembership, documentCount });
 
+  const [uploadFile] = useUploadFileMutation();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<Boolean>(false);
   const onDrop = useCallback(async (files: any[]) => {
@@ -44,11 +47,7 @@ const Upload = () => {
     formData.append("file", file);
 
     try {
-      const { data } = await axios.post("/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const { data } = await uploadFile(formData);
       console.log("Upload response:", data);
       router.push(`/dashboard/file/${data?.document?._id}`);
     } catch (error) {
@@ -73,14 +72,14 @@ const Upload = () => {
           <h1>
             Your File limit Exceed :{" "}
             {documentCount
-              .toString()
-              .concat(hasActiveMembership ? " / 20" : " / 2")}
+              ?.toString()
+              ?.concat(hasActiveMembership ? " / 20" : " / 2")}
           </h1>
         ) : (
           <h1 className="flex gap-2">
-            You Still can upload {20 - documentCount} Files [
+            You Still can upload {20 - documentCount || ""} Files [
             {documentCount
-              .toString()
+              ?.toString()
               .concat(hasActiveMembership ? " / 20" : " / 2")}
             ]
           </h1>

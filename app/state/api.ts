@@ -26,6 +26,14 @@ export const api = createApi({
         params: { documentId },
       }),
     }),
+    uploadFile: build.mutation({
+      query: (formData) => ({
+        url: "/api/upload",
+        method: "POST",
+        body: formData,
+        formData: true,
+      }),
+    }),
     //   ----------------------------------------------
     //                  Chats API calls
     //   ----------------------------------------------
@@ -77,4 +85,5 @@ export const {
   // subscription
   useGetSubscriptionQuery,
   useNewSubscriptionMutation,
+  useUploadFileMutation,
 } = api;
