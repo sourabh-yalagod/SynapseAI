@@ -1,16 +1,11 @@
 "use server";
 import { userDetail } from "@/app/dashboard/upgrade/page";
 import { axiosInstance } from "@/lib/axiosInstance";
+import getBaseUrl from "@/lib/baseUrl";
 import stripe from "@/lib/stripe";
 import { auth } from "@clerk/nextjs/server";
 let stripeCustomerId = null;
 
-const getBaseUrl = () =>
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : `https://${process.env.VERCEL_URL}`;
-
-export default getBaseUrl;
 export const createCheckoutSession = async (
   userDetail: userDetail
 ): Promise<string> => {

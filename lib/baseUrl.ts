@@ -1,0 +1,3 @@
+const getBaseUrl = () => `${process.env.NEXT_PUBLIC_BASEURL}`;
+
+export default getBaseUrl;

@@ -1,9 +1,9 @@
 "use server";
 
+import getBaseUrl from "@/lib/baseUrl";
 import stripe from "@/lib/stripe";
 import { Subscription } from "@/models/model";
 import { auth } from "@clerk/nextjs/server";
-import getBaseUrl from "./createCheckoutSession";
 
 export const subscriptionPortal = async () => {
   await auth.protect();

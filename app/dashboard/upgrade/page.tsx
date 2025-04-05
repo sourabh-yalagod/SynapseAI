@@ -37,10 +37,13 @@ const PricingModel = () => {
 
       if (hasActiveMembership) {
         const portalLink = await subscriptionPortal();
+        console.log("portalLink : ", portalLink);
+
         router.push(portalLink);
       } else {
         const sessionId = await createCheckoutSession(userDetail);
         console.log(sessionId);
+        console.log("sessionId : ", sessionId);
         if (sessionId) await stripePromise?.redirectToCheckout({ sessionId });
       }
     });
