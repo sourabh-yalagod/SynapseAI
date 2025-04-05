@@ -8,7 +8,6 @@ import { auth } from "@clerk/nextjs/server";
 export const subscriptionPortal = async () => {
   await auth.protect();
   const { userId } = await auth();
-
   const subscription = await Subscription.findOne({ userId });
   if (!subscription.customerId) {
     throw new Error("subscription.customerId is required . . . !");
@@ -17,5 +16,6 @@ export const subscriptionPortal = async () => {
     customer: subscription.customerId,
     return_url: `${getBaseUrl()}/dashboard?payment-portal=true`,
   });
-  return session?.url || "/dashboard/upgrade?payment-portal=false";
+  console.log("session : ", session);
+  return session?.url || `${getBaseUrl()}/dashboard?payment-portal=true`;
 };
