@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 SynapseAI
 
-## Getting Started
+**SynapseAI** is an intelligent PDF chat assistant that leverages **RAG (Retrieval-Augmented Generation)** pipeline and the **MERN stack** (MongoDB, Express.js, React.js, Node.js). Users can upload PDFs and chat with the contents using advanced AI capabilities.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌐 Demo & Source Code
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 🔗 **Live Demo**: [https://synapseai.vercel.app](https://ai-pdf-reader.vercel.app/)
+- 💻 **Source Code**: [https://github.com/yourusername/synapseai](https://github.com/sourabh-yalagod/SynapseAI/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧠 Features
 
-## Learn More
+- 🗂 Upload and interact with up to **3 PDF files (free tier)**
+- 💼 Upload and chat with up to **20 PDFs (premium subscription)**
+- 💬 Chat with documents using **AI-powered contextual understanding**
+- 🔎 Fast and relevant document retrieval with **RAG pipeline**
+- 🧾 Document storage and history management
+- 🔐 User authentication and subscription system
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 💡 Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Layer         | Technology                         |
+|--------------|-------------------------------------|
+| Frontend     | Nextjs, Tailwind CSS                |
+| Backend      | Node.js, Express.js                 |
+| Database     | MongoDB,Pinecode vector Database    |
+| AI & NLP     | OpenAI, LangChain, RAG Pipeline     |
+| File Storage | Cloud Storage / Local (configurable)|
+| Auth & Sub   | Clerk, Stripe (for subscriptions)     |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Upload Limitations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Tier       | Upload Limit         |
+|------------|----------------------|
+| Free       | 3 PDF files max      |
+| Subscribed | 20 PDF files max     |
+
+---
+
+## 📦 Project Structure (MERN + AI)
+
